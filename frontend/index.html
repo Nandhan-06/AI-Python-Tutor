@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Maya, your Python tutor</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="bar">
+  <strong class="brand">Maya <span>Python tutor</span></strong>
+  <div class="tools">
+    <select id="voice" aria-label="Maya's voice"></select>
+    <button id="fsDown" aria-label="Smaller text">A-</button>
+    <button id="fsUp" aria-label="Larger text">A+</button>
+    <button id="theme" aria-label="Switch between light and dark mode">Dark</button>
+  </div>
+</header>
+<p id="toast" role="alert" hidden></p>
+
+<form id="setup" class="setup">
+  <h1>Hi, I'm Maya, your Python tutor.</h1>
+  <p class="muted">Tell me a little about you and we'll start with something small. Use the same name next time to pick up where you left off.</p>
+  <label>What should I call you?<input name="name" maxlength="40" required autocomplete="off"></label>
+  <label>What do you want to learn?
+    <select name="topic">
+      <option>Variables</option><option>Data types</option><option>Operators</option><option>Conditions</option>
+      <option selected>Loops</option><option>Lists</option><option>Tuples</option><option>Dictionaries</option>
+      <option>Sets</option><option>Functions</option><option>Exceptions</option><option>File handling</option>
+      <option>Object-oriented programming</option>
+    </select>
+  </label>
+  <fieldset class="seg"><legend>Your level</legend>
+    <label><input type="radio" name="level" value="Beginner" checked><span>Beginner</span></label>
+    <label><input type="radio" name="level" value="Intermediate"><span>Intermediate</span></label>
+    <label><input type="radio" name="level" value="Advanced"><span>Advanced</span></label>
+  </fieldset>
+  <details><summary>More options</summary>
+    <label>How should I explain things?
+      <select name="style"><option>Simple</option><option>Example-based</option><option>Step-by-step</option></select></label>
+    <label>Should I speak?
+      <select name="mode"><option value="Both">Yes, speak and show text</option><option value="Text">No, text only</option></select></label>
+  </details>
+  <button class="primary big">Start lesson</button>
+  <p id="health" class="muted"></p>
+</form>
+
+<div id="app" hidden>
+  <aside class="maya">
+    <div id="avatar" data-state="idle">
+      <svg viewBox="0 0 200 220" role="img" aria-label="Maya, your tutor">
+        <path d="M14 220C14 172 58 160 100 160C142 160 186 172 186 220Z" fill="#0f7b6c"/>
+        <path d="M84 126h32v44q-16 10-32 0z" fill="#b9805d"/>
+        <g id="head">
+          <path d="M38 100C34 40 70 16 100 16C132 16 166 40 162 100C162 140 170 162 150 178L50 178C30 162 38 140 38 100Z" fill="#1c1820"/>
+          <ellipse cx="100" cy="98" rx="48" ry="56" fill="#d39b77"/>
+          <path d="M52 90C54 50 84 36 104 40C132 42 150 60 148 92C132 72 108 64 86 68C70 72 58 80 52 90Z" fill="#1c1820"/>
+          <g class="brows" fill="none" stroke="#1c1820" stroke-width="4" stroke-linecap="round"><path d="M68 84Q80 78 92 84"/><path d="M108 84Q120 78 132 84"/></g>
+          <g class="eyes">
+            <ellipse cx="80" cy="99" rx="10" ry="7" fill="#fff"/><circle class="pupil" cx="80" cy="99" r="4.5" fill="#2a1b14"/>
+            <ellipse cx="120" cy="99" rx="10" ry="7" fill="#fff"/><circle class="pupil" cx="120" cy="99" r="4.5" fill="#2a1b14"/>
+          </g>
+          <path d="M100 104Q95 118 102 120" fill="none" stroke="#a9714f" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="68" cy="120" r="9" fill="#e07a6a" opacity=".25"/><circle cx="132" cy="120" r="9" fill="#e07a6a" opacity=".25"/>
+          <path id="smile" d="M84 134Q100 148 116 134" fill="none" stroke="#8a2f3a" stroke-width="4" stroke-linecap="round"/>
+          <ellipse id="mouth" cx="100" cy="138" rx="12" ry="2" fill="#7a2230"/>
+        </g>
+        <g class="dots"><circle cx="150" cy="22" r="4"/><circle cx="163" cy="22" r="4"/><circle cx="176" cy="22" r="4"/></g>
+      </svg>
+      <canvas id="wave" height="40" aria-hidden="true"></canvas>
+      <p id="status" aria-live="polite">Ready when you are</p>
+      <p id="caption" class="caption" aria-live="off"></p>
+    </div>
+    <div class="voicebar">
+      <button id="mic" class="primary">Talk to Maya</button>
+      <button id="stop" disabled>Stop speaking</button>
+      <label class="switch"><input type="checkbox" id="handsfree"> Hands-free conversation</label>
+      <label class="switch"><input type="checkbox" id="speakOn" checked> Spoken replies</label>
+      <label class="switch"><input type="checkbox" id="captions" checked> Captions</label>
+      <p class="muted small">Tip: headphones work best for hands-free, so Maya doesn't hear herself.</p>
+    </div>
+    <div id="stats"></div>
+  </aside>
+
+  <main id="main">
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button role="tab" data-tab="learn" aria-selected="true">Learn</button>
+      <button role="tab" data-tab="practice" aria-selected="false">Practice</button>
+      <button role="tab" data-tab="play" aria-selected="false">Playground</button>
+      <button role="tab" data-tab="quiz" aria-selected="false">Quiz</button>
+      <button role="tab" data-tab="progress" aria-selected="false">Progress</button>
+    </nav>
+
+    <section id="tab-learn" class="tab" role="tabpanel">
+      <div id="feed" aria-live="polite"></div>
+      <form id="askForm" class="ask">
+        <input id="q" maxlength="1000" placeholder="Ask Maya anything about Python…" aria-label="Your question" autocomplete="off">
+        <button class="primary">Send</button>
+      </form>
+    </section>
+
+    <section id="tab-practice" class="tab card" role="tabpanel" hidden>
+      <div class="row between"><h2>Practice</h2><button id="newEx" class="primary">New exercise</button></div>
+      <p class="muted" id="exIntro">Press "New exercise" and Maya will write one for your topic. Your code is run for real and checked against tests.</p>
+      <div id="exBox" hidden>
+        <p><span id="exLevel" class="badge"></span> <span id="exPrompt"></span></p>
+        <textarea id="exCode" rows="9" spellcheck="false" aria-label="Your code"></textarea>
+        <div class="row">
+          <button id="runTests" class="primary">Run tests</button>
+          <button id="hintBtn">Hint</button>
+          <button id="solBtn" disabled title="Unlocks after all hints or three attempts">Show solution</button>
+        </div>
+        <p id="exStatus" class="muted"></p>
+        <ol id="hints"></ol>
+        <div id="exResult"></div>
+      </div>
+    </section>
+
+    <section id="tab-play" class="tab card" role="tabpanel" hidden>
+      <div class="row between"><h2>Python playground</h2><span class="muted small">Ctrl+Enter to run</span></div>
+      <textarea id="pgCode" rows="12" spellcheck="false" aria-label="Python code"></textarea>
+      <div class="row"><button id="pgRun" class="primary">Run</button><button id="pgReset">Reset</button><span id="pgStatus" class="muted"></span></div>
+      <h3>Output</h3>
+      <pre id="pgOut" aria-live="polite"></pre>
+      <p id="pgTip" class="tip" hidden></p>
+    </section>
+
+    <section id="tab-quiz" class="tab card" role="tabpanel" hidden>
+      <div class="row between"><h2>Quiz</h2><button id="newQuiz" class="primary">Start a 3-question quiz</button></div>
+      <div id="quizBox"></div>
+    </section>
+
+    <section id="tab-progress" class="tab card" role="tabpanel" hidden>
+      <h2>Your learning path</h2>
+      <div id="reco"></div>
+      <ol id="path" class="path"></ol>
+      <div class="two"><div><h3>Strengths</h3><ul id="strengths"></ul></div><div><h3>Needs more practice</h3><ul id="needs"></ul></div></div>
+      <div class="row"><button id="sumBtn">Ask Maya for a summary</button></div>
+      <div id="sumBox"></div>
+    </section>
+  </main>
+</div>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
